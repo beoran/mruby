@@ -26,6 +26,8 @@ void mrb_init_regexp(mrb_state*);
 void mrb_init_print(mrb_state*);
 void mrb_init_time(mrb_state*);
 void mrb_init_math(mrb_state*);
+void mrb_init_io(mrb_state*);
+void mrb_init_file(mrb_state*);
 void mrb_init_mrblib(mrb_state*);
 
 
@@ -63,6 +65,10 @@ mrb_init_core(mrb_state *mrb)
 #endif
 #ifdef ENABLE_MATH
   mrb_init_math(mrb);
+#endif
+#ifdef ENABLE_FILE
+  mrb_init_io(mrb);
+  mrb_init_file(mrb);
 #endif
 
   mrb_init_mrblib(mrb);
