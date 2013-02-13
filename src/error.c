@@ -16,8 +16,6 @@
 #include "mruby/proc.h"
 #include "mruby/irep.h"
 
-#define warn_printf printf
-
 mrb_value
 mrb_exc_new(mrb_state *mrb, struct RClass *c, const char *ptr, long len)
 {
@@ -27,7 +25,6 @@ mrb_exc_new(mrb_state *mrb, struct RClass *c, const char *ptr, long len)
 mrb_value
 mrb_exc_new3(mrb_state *mrb, struct RClass* c, mrb_value str)
 {
-  //StringValue(str);
   mrb_string_value(mrb, &str);
   return mrb_funcall(mrb, mrb_obj_value(c), "new", 1, str);
 }
@@ -418,8 +415,6 @@ mrb_init_exception(mrb_state *mrb)
   mrb_define_method(mrb, e, "inspect", exc_inspect, ARGS_NONE());
 
   mrb->eStandardError_class     = mrb_define_class(mrb, "StandardError",       mrb->eException_class); /* 15.2.23 */
-  mrb_define_class(mrb, "RuntimeError", mrb->eStandardError_class);                                    /* 15.2.28 */
-
   mrb_define_class(mrb, "RuntimeError", mrb->eStandardError_class);                                    /* 15.2.28 */
   e = mrb_define_class(mrb, "ScriptError",  mrb->eException_class);                                    /* 15.2.37 */
   mrb_define_class(mrb, "SyntaxError",  e);                                                            /* 15.2.38 */

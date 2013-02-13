@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "mruby/class.h"
 #include "mruby/numeric.h"
+#include "error.h"
 
 int
 mrb_obj_eq(mrb_state *mrb, mrb_value v1, mrb_value v2)
@@ -112,10 +113,10 @@ nil_inspect(mrb_state *mrb, mrb_value obj)
 static mrb_value
 true_and(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
-  return mrb_test(obj2)?mrb_true_value():mrb_false_value();
+  mrb_get_args(mrb, "b", &obj2);
+  return obj2 ? mrb_true_value() : mrb_false_value();
 }
 
 /* 15.2.5.3.2  */
@@ -131,10 +132,10 @@ true_and(mrb_state *mrb, mrb_value obj)
 static mrb_value
 true_xor(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
-  return mrb_test(obj2)?mrb_false_value():mrb_true_value();
+  mrb_get_args(mrb, "b", &obj2);
+  return obj2 ? mrb_false_value() : mrb_true_value();
 }
 
 /* 15.2.5.3.3  */
@@ -171,9 +172,9 @@ true_to_s(mrb_state *mrb, mrb_value obj)
 static mrb_value
 true_or(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
+  mrb_get_args(mrb, "b", &obj2);
   return mrb_true_value();
 }
 
@@ -202,9 +203,9 @@ true_or(mrb_state *mrb, mrb_value obj)
 static mrb_value
 false_and(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
+  mrb_get_args(mrb, "b", &obj2);
   return mrb_false_value();
 }
 
@@ -224,10 +225,10 @@ false_and(mrb_state *mrb, mrb_value obj)
 static mrb_value
 false_xor(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
-  return mrb_test(obj2)?mrb_true_value():mrb_false_value();
+  mrb_get_args(mrb, "b", &obj2);
+  return obj2 ? mrb_true_value() : mrb_false_value();
 }
 
 /* 15.2.4.3.3  */
@@ -244,10 +245,10 @@ false_xor(mrb_state *mrb, mrb_value obj)
 static mrb_value
 false_or(mrb_state *mrb, mrb_value obj)
 {
-  mrb_value obj2;
+  int obj2;
 
-  mrb_get_args(mrb, "o", &obj2);
-  return mrb_test(obj2)?mrb_true_value():mrb_false_value();
+  mrb_get_args(mrb, "b", &obj2);
+  return obj2 ? mrb_true_value() : mrb_false_value();
 }
 
 /* 15.2.6.3.3  */
@@ -395,7 +396,7 @@ mrb_check_type(mrb_state *mrb, mrb_value x, enum mrb_vtype t)
 {
   const struct types *type = builtin_types;
   struct RString *s;
-  int xt;
+  enum mrb_vtype xt;
 
   xt = mrb_type(x);
   if ((xt != t) || (xt == MRB_TT_DATA)) {
@@ -443,16 +444,7 @@ mrb_value
 mrb_any_to_s(mrb_state *mrb, mrb_value obj)
 {
   const char *cname = mrb_obj_classname(mrb, obj);
-  size_t len;
-  mrb_value str;
-  struct RString *s;
-
-  len = strlen(cname)+6+16;
-  str = mrb_str_new(mrb, 0, len); /* 6:tags 16:addr */
-  s = mrb_str_ptr(str);
-  s->len = sprintf(s->ptr, "#<%s:0x%lx>", cname, (unsigned long)(obj.value.p));
-
-  return str;
+  return mrb_sprintf(mrb, "#<%s:%p>", cname, mrb_voidp(obj));
 }
 
 /*

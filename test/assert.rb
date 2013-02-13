@@ -5,14 +5,13 @@ $asserts  = []
 $test_start = Time.now if Object.const_defined?(:Time)
 
 ##
-# Print the assertion in a readable way
-def print_assertion_string(str, iso)
-  print(str)
-  if(iso != '')
-    print(' [')
-    print(iso)
-    print(']')
-  end
+# Create the assertion in a readable way
+def assertion_string(err, str, iso=nil, e=nil)
+  msg = "#{err}#{str}"
+  msg += " [#{iso}]" if iso && iso != ''
+  msg += " => #{e.message}" if e
+  msg += " (mrbgems: #{GEMNAME})" if Object.const_defined?(:GEMNAME)
+  msg
 end
 
 ##
@@ -24,9 +23,10 @@ end
 #       which will be tested by this
 #       assertion
 def assert(str = 'Assertion failed', iso = '')
+  print(str, (iso != '' ? " [#{iso}]" : ''), ' : ') if $mrbtest_verbose
   begin
     if(!yield)
-      $asserts.push(['Fail: ', str, iso])
+      $asserts.push(assertion_string('Fail: ', str, iso))
       $ko_test += 1
       print('F')
     else
@@ -34,10 +34,11 @@ def assert(str = 'Assertion failed', iso = '')
       print('.')
     end
   rescue Exception => e
-    $asserts.push(['Error: ', str, iso, e])
+    $asserts.push(assertion_string('Error: ', str, iso, e))
     $kill_test += 1
     print('X')
   end
+  print("\n") if $mrbtest_verbose
 end
 
 ##
@@ -45,14 +46,9 @@ end
 # which were reported broken.
 def report()
   print "\n"
-  $asserts.each do |err, str, iso, e|
-    print(err);
-    print_assertion_string(str, iso)
-    if e
-      print(" => ")
-      print(e.message)
-    end
-    print("\n")
+
+  $asserts.each do |msg|
+    puts msg
   end
 
   $total_test = $ok_test.+($ko_test)

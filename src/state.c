@@ -11,7 +11,7 @@
 
 void mrb_init_heap(mrb_state*);
 void mrb_init_core(mrb_state*);
-void mrb_init_ext(mrb_state*);
+void mrb_final_core(mrb_state*);
 
 mrb_state*
 mrb_open_allocf(mrb_allocf f, void *ud)
@@ -27,7 +27,6 @@ mrb_open_allocf(mrb_allocf f, void *ud)
 
   mrb_init_heap(mrb);
   mrb_init_core(mrb);
-  mrb_init_ext(mrb);
   return mrb;
 }
 
@@ -86,7 +85,9 @@ void mrb_free_heap(mrb_state *mrb);
 void
 mrb_close(mrb_state *mrb)
 {
-  int i;
+  size_t i;
+
+  mrb_final_core(mrb);
 
   /* free */
   mrb_gc_free_gv(mrb);
@@ -109,20 +110,23 @@ mrb_close(mrb_state *mrb)
   mrb_free(mrb, mrb);
 }
 
-void
-mrb_add_irep(mrb_state *mrb, int idx)
+mrb_irep*
+mrb_add_irep(mrb_state *mrb)
 {
+  static const mrb_irep mrb_irep_zero = { 0 };
+  mrb_irep *irep;
+
   if (!mrb->irep) {
     int max = 256;
 
-    if (idx > max) max = idx+1;
+    if (mrb->irep_len > max) max = mrb->irep_len+1;
     mrb->irep = (mrb_irep **)mrb_calloc(mrb, max, sizeof(mrb_irep*));
     mrb->irep_capa = max;
   }
-  else if (mrb->irep_capa <= idx) {
+  else if (mrb->irep_capa <= mrb->irep_len) {
     int i;
     size_t old_capa = mrb->irep_capa;
-    while (mrb->irep_capa <= idx) {
+    while (mrb->irep_capa <= mrb->irep_len) {
       mrb->irep_capa *= 2;
     }
     mrb->irep = (mrb_irep **)mrb_realloc(mrb, mrb->irep, sizeof(mrb_irep*)*mrb->irep_capa);
@@ -130,6 +134,12 @@ mrb_add_irep(mrb_state *mrb, int idx)
       mrb->irep[i] = NULL;
     }
   }
+  irep = (mrb_irep *)mrb_malloc(mrb, sizeof(mrb_irep));
+  *irep = mrb_irep_zero;
+  mrb->irep[mrb->irep_len] = irep;
+  irep->idx = mrb->irep_len++;
+
+  return irep;
 }
 
 mrb_value
